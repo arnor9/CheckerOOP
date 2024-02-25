@@ -35,8 +35,11 @@ class Spot{
     }
 }
 
-class Draw{
+class Drawboard{
     private Board board;
+    public Drawboard(Board board){
+        this.board = board;
+    }
     public void draw(Spot[][] boxes){
         System.out.println("   0 1 2 3 4 5 6 7    <- X-axis");
         System.out.println("  +----------------+");
@@ -70,7 +73,7 @@ class Draw{
 class Board {
     private final int size = 8;
     private Spot[][] boxes;
-    private Draw draw;
+    private Drawboard drawboard;
     private int xCord;
     private int yCord;
     private int newXCord;
@@ -78,11 +81,10 @@ class Board {
 
     public Board() {
         this.boxes = new Spot[size][size];
-        this.draw = new Draw();
     }
 
     public void startboard() {
-        //boxes = new Spot[size][size];
+        this.drawboard = new Drawboard(this);
         for (int i = 0; i < boxes.length; i++) {
             for (int j = 0; j < boxes.length; j++) {
                 boxes[i][j] = new Spot(i, j, null);
@@ -99,7 +101,7 @@ class Board {
             boxes[i][2] = new Spot(0, 1, new Pawn(true));
             boxes[i][6] = new Spot(0, 1, new Pawn(false));
         }
-        draw.draw(boxes);
+        drawboard.draw(boxes);
     }
 
     public void setCurrentX(int xCord) {
@@ -127,7 +129,7 @@ class Board {
     }
 
     public void setNewY(int newYCord) {
-        this.yCord = newYCord;
+        this.newYCord = newYCord;
     }
 
     public int getNewYCord() {
@@ -172,41 +174,36 @@ class Player{
 class Game{
     private Player[] players;
     private Board board;
-    private Pawn pawn;
     private Spot[][] boxes;
-    private Draw draw;
+    private Drawboard drawboard;
 
-    public Game(){
-        this.players = new Player[2];
+    public Game(Player p1, Player p2, Board board, Drawboard drawboard){
+        this.players = new Player[]{p1, p2};
         this.board = new Board();
+        this.drawboard = drawboard;
+        this.boxes = board.getBoxes();
     }
 
-    public void initialize(Player p1, Player p2){
-        players[0] = p1;
-        players[1] = p2;
-
+    public void initialize(){
         board.startboard();
     }
     public boolean GameOver(){
-        return true;
+        return board.getxCord() == -1;
     }
     public void validMove() {
-        int xDiff = board.getxCord() - board.getNewXCord();
-        int yDiff = board.getYCord() - board.getNewYCord();
-        boolean moved = false;
-        while (!moved) {
-            if (xDiff == 1 && yDiff == 1) {
-                move(board.getxCord(), board.getYCord(), board.getNewXCord(), board.getNewYCord());
-                moved = true;
-            } else {
-                System.out.println("This move is not possible, try again");
-            }
+        int xDiff = Math.abs(board.getxCord() - board.getNewXCord());
+        int yDiff = Math.abs(board.getYCord() - board.getNewYCord());
+        if (xDiff == 1 && yDiff == 1) {
+            move(board.getxCord(), board.getYCord(), board.getNewXCord(), board.getNewYCord());
+        } else {
+            System.out.println("This move is not possible, try again");
         }
     }
     public void move(int currentX, int currentY, int newX, int newY){
+        Piece pieceToMove = boxes[currentX][currentY].getPiece();
         boxes[currentX][currentY] = new Spot(currentX, currentY, null);
-        boxes[newX][newY] = new Spot(newX, newY, new Pawn(true));
-        draw.draw(boxes);
+        boxes[newX][newY] = new Spot(newX, newY, pieceToMove);
+        drawboard.draw(boxes);
 
     }
 
@@ -216,8 +213,13 @@ public class Checker{
     public static void main(String[] args) {
         Player p1 = new Player(true);
         Player p2 = new Player(false);
-        Game game = new Game();
-        game.initialize(p1, p2);
-        game.validMove();
+        Board board = new Board();
+        Drawboard drawboard = new Drawboard(board);
+        Game game = new Game(p1, p2, board, drawboard);
+        game.initialize();
+        while (!game.GameOver()) {
+            game.validMove();
+        }
+        System.out.println("Game Over!");
     }
 }

@@ -5,7 +5,6 @@ import java.util.Scanner;
 
 class Spot{
     private Piece piece;
-    private Pawn pawn;
     private int x;
     private int y;
 
@@ -29,46 +28,15 @@ class Spot{
     @Override
     public String toString(){
         if (piece != null){
-            return pawn.getOne() ? "1": "2";
+            return piece.isPlayer1() ? "1": "2";
         }else {
             return " ";
         }
     }
 }
 
-class Board {
-    private final int size = 8;
-    private Spot[][] boxes;
-
-
-    public Board(){
- //       this.startboard();
-    }
-
-    public void startboard() {
-        boxes = new Spot[size][size];
-        Draw draw = new Draw();
-        for (int i = 0; i < boxes.length; i++) {
-            for (int j = 0; j < boxes.length; j++) {
-                boxes[i][j] = new Spot(i, j, null);
-            }
-        }
-
-        for (int i = 0; i < boxes.length; i++) {
-            boxes[i][1] = new Spot(0, 1, new Pawn(true));
-            boxes[i][5] = new Spot(0, 1, new Pawn(false));
-            boxes[i][7] = new Spot(0, 1, new Pawn(false));
-        }
-        for (int i = 1; i < boxes.length; i++) {
-            boxes[i][0] = new Spot(0, 1, new Pawn(true));
-            boxes[i][2] = new Spot(0, 1, new Pawn(true));
-            boxes[i][6] = new Spot(0, 1, new Pawn(false));
-        }
-        draw.draw(boxes);
-    }
-}
-
 class Draw{
+    private Board board;
     public void draw(Spot[][] boxes){
         System.out.println("   0 1 2 3 4 5 6 7    <- X-axis");
         System.out.println("  +----------------+");
@@ -88,31 +56,106 @@ class Draw{
         System.out.println("Coordinate of piece to move");
         System.out.print("Enter X: ");
         Scanner scanner1 = new Scanner(System.in);
-        int xCordinate = scanner1.nextInt();
+        board.setCurrentX(scanner1.nextInt());
         System.out.print("Enter Y: ");
-        //Scanner scanner2 = new Scanner(System.in);
-        int yCordinate = scanner1.nextInt();
+        board.setCurrentY(scanner1.nextInt());
+        System.out.println("Coordinate of new position");
+        System.out.print("Enter X: ");
+        board.setNewX(scanner1.nextInt());
+        System.out.print("Enter Y: ");
+        board.setNewY(scanner1.nextInt());
     }
 }
 
+class Board {
+    private final int size = 8;
+    private Spot[][] boxes;
+    private Draw draw;
+    private int xCord;
+    private int yCord;
+    private int newXCord;
+    private int newYCord;
+
+    public Board() {
+        this.boxes = new Spot[size][size];
+        this.draw = new Draw();
+    }
+
+    public void startboard() {
+        //boxes = new Spot[size][size];
+        for (int i = 0; i < boxes.length; i++) {
+            for (int j = 0; j < boxes.length; j++) {
+                boxes[i][j] = new Spot(i, j, null);
+            }
+        }
+
+        for (int i = 0; i < boxes.length; i += 2) {
+            boxes[i][1] = new Spot(0, 1, new Pawn(true));
+            boxes[i][5] = new Spot(0, 1, new Pawn(false));
+            boxes[i][7] = new Spot(0, 1, new Pawn(false));
+        }
+        for (int i = 1; i < boxes.length; i += 2) {
+            boxes[i][0] = new Spot(0, 1, new Pawn(true));
+            boxes[i][2] = new Spot(0, 1, new Pawn(true));
+            boxes[i][6] = new Spot(0, 1, new Pawn(false));
+        }
+        draw.draw(boxes);
+    }
+
+    public void setCurrentX(int xCord) {
+        this.xCord = xCord;
+    }
+
+    public int getxCord() {
+        return xCord;
+    }
+
+    public void setCurrentY(int yCord) {
+        this.yCord = yCord;
+    }
+
+    public int getYCord() {
+        return yCord;
+    }
+
+    public void setNewX(int newXCord) {
+        this.newXCord = newXCord;
+    }
+
+    public int getNewXCord() {
+        return newXCord;
+    }
+
+    public void setNewY(int newYCord) {
+        this.yCord = newYCord;
+    }
+
+    public int getNewYCord() {
+        return newYCord;
+    }
+
+    public Spot[][] getBoxes() {
+        return boxes;
+    }
+}
+
+
 abstract class Piece{
-    public abstract void validMove();
+    private boolean player1;
+    public Piece(boolean player1) {
+        this.player1 = player1;
+    }
+
+    public boolean isPlayer1() {
+        return player1;
+    }
 }
 
 class Pawn extends Piece{
-    private Spot currentPosition;
-    private Spot newPosition;
-    boolean one;
+    private Game game;
 
-    public Pawn(boolean one){
-        this.one = one;
-
-    }
-    public boolean getOne(){
-        return one;
-    }
-    @Override
-    public void validMove() {
+    public Pawn(boolean player1){
+        super(player1);
 
     }
 }
@@ -129,6 +172,9 @@ class Player{
 class Game{
     private Player[] players;
     private Board board;
+    private Pawn pawn;
+    private Spot[][] boxes;
+    private Draw draw;
 
     public Game(){
         this.players = new Player[2];
@@ -141,6 +187,28 @@ class Game{
 
         board.startboard();
     }
+    public boolean GameOver(){
+        return true;
+    }
+    public void validMove() {
+        int xDiff = board.getxCord() - board.getNewXCord();
+        int yDiff = board.getYCord() - board.getNewYCord();
+        boolean moved = false;
+        while (!moved) {
+            if (xDiff == 1 && yDiff == 1) {
+                move(board.getxCord(), board.getYCord(), board.getNewXCord(), board.getNewYCord());
+                moved = true;
+            } else {
+                System.out.println("This move is not possible, try again");
+            }
+        }
+    }
+    public void move(int currentX, int currentY, int newX, int newY){
+        boxes[currentX][currentY] = new Spot(currentX, currentY, null);
+        boxes[newX][newY] = new Spot(newX, newY, new Pawn(true));
+        draw.draw(boxes);
+
+    }
 
 }
 
@@ -150,7 +218,6 @@ public class Checker{
         Player p2 = new Player(false);
         Game game = new Game();
         game.initialize(p1, p2);
-
-
+        game.validMove();
     }
 }

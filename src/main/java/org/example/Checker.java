@@ -55,18 +55,7 @@ class Drawboard{
         System.out.println("  +----------------+");
         System.out.println("   0 1 2 3 4 5 6 7");
         System.out.println(" ");
-        System.out.println("Turn of player no. 1");
-        System.out.println("Coordinate of piece to move");
-        System.out.print("Enter X: ");
-        Scanner scanner1 = new Scanner(System.in);
-        board.setCurrentX(scanner1.nextInt());
-        System.out.print("Enter Y: ");
-        board.setCurrentY(scanner1.nextInt());
-        System.out.println("Coordinate of new position");
-        System.out.print("Enter X: ");
-        board.setNewX(scanner1.nextInt());
-        System.out.print("Enter Y: ");
-        board.setNewY(scanner1.nextInt());
+
     }
 }
 
@@ -74,6 +63,7 @@ class Board {
     private final int size = 8;
     private Spot[][] boxes;
     private Drawboard drawboard;
+    private Game game;
     private int xCord;
     private int yCord;
     private int newXCord;
@@ -176,10 +166,11 @@ class Game{
     private Board board;
     private Spot[][] boxes;
     private Drawboard drawboard;
+    private boolean isPlayer1Turn = true;
 
     public Game(Player p1, Player p2, Board board, Drawboard drawboard){
         this.players = new Player[]{p1, p2};
-        this.board = new Board();
+        this.board = board;
         this.drawboard = drawboard;
         this.boxes = board.getBoxes();
     }
@@ -187,24 +178,66 @@ class Game{
     public void initialize(){
         board.startboard();
     }
+    public void inputHandler(){
+        if (isPlayer1Turn) {
+            System.out.println("Turn of player no. 1");
+        } else {
+            System.out.println("Turn of player no. 2");
+        }
+        System.out.println("Coordinate of piece to move");
+        System.out.print("Enter X: ");
+        Scanner scanner1 = new Scanner(System.in);
+        board.setCurrentX(scanner1.nextInt());
+        System.out.print("Enter Y: ");
+        board.setCurrentY(scanner1.nextInt());
+        System.out.println("Coordinate of new position");
+        System.out.print("Enter X: ");
+        board.setNewX(scanner1.nextInt());
+        System.out.print("Enter Y: ");
+        board.setNewY(scanner1.nextInt());
+
+    }
     public boolean GameOver(){
         return board.getxCord() == -1;
     }
-    public void validMove() {
-        int xDiff = Math.abs(board.getxCord() - board.getNewXCord());
-        int yDiff = Math.abs(board.getYCord() - board.getNewYCord());
-        if (xDiff == 1 && yDiff == 1) {
-            move(board.getxCord(), board.getYCord(), board.getNewXCord(), board.getNewYCord());
-        } else {
-            System.out.println("This move is not possible, try again");
-        }
-    }
-    public void move(int currentX, int currentY, int newX, int newY){
-        Piece pieceToMove = boxes[currentX][currentY].getPiece();
-        boxes[currentX][currentY] = new Spot(currentX, currentY, null);
-        boxes[newX][newY] = new Spot(newX, newY, pieceToMove);
-        drawboard.draw(boxes);
+    public boolean validMove(int currentX, int currentY, int newX, int newY, Piece pieceToMove) {
+        if (currentX < 0 || currentX > 7 || currentY < 0 || currentY > 7 ||
+                newX < 0 || newX > 7 || newY < 0 || newY > 7){
+            return false;
+        } else if (pieceToMove.isPlayer1() == isPlayer1Turn && boxes[newX][newY].getPiece() == null){
 
+            int xDiff = Math.abs(currentX - newX);
+            int yDiff = currentY - newY;
+            if (xDiff == 1) {
+                if (isPlayer1Turn && yDiff == -1) {
+                    return true;
+                } else if (!isPlayer1Turn && yDiff == 1) {
+                  return true;
+             }
+            }
+        }
+        return false;
+    }
+    public boolean move(){
+        Piece pieceToMove = boxes[board.getxCord()][board.getYCord()].getPiece();
+        if (validMove(board.getxCord(), board.getYCord(), board.getNewXCord(), board.getNewYCord(), pieceToMove)) {
+            boxes[board.getxCord()][board.getYCord()] = new Spot(board.getxCord(), board.getYCord(), null);
+            boxes[board.getNewXCord()][board.getNewYCord()] = new Spot(board.getNewXCord(), board.getNewYCord(), pieceToMove);
+            drawboard.draw(boxes);
+            System.out.println("Piece moved! \n");
+            toggleTurn();
+            inputHandler();
+            return true;
+        } else {
+                System.out.println("this was illigal move, try again!");
+        }
+        return false;
+    }
+    public void toggleTurn(){
+        isPlayer1Turn = !isPlayer1Turn;
+    }
+    public boolean isPlayer1Turn(){
+        return isPlayer1Turn;
     }
 
 }
@@ -217,9 +250,12 @@ public class Checker{
         Drawboard drawboard = new Drawboard(board);
         Game game = new Game(p1, p2, board, drawboard);
         game.initialize();
-        while (!game.GameOver()) {
-            game.validMove();
+        while(!game.GameOver()) {
+            game.inputHandler();
+            while (!game.move()){
+                game.inputHandler();
+            }
+            System.out.println("Invalid move, try again");
         }
-        System.out.println("Game Over!");
     }
 }

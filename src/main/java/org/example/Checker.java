@@ -1,8 +1,4 @@
-package org.example;
-
-
 import java.util.Scanner;
-
 class Spot{
     private Piece piece;
     private int x, y;
@@ -15,7 +11,6 @@ class Spot{
     public Piece getPiece(){
         return this.piece;
     }
-
     @Override
     public String toString(){
         if (piece != null){
@@ -28,7 +23,6 @@ class Spot{
 class Board {
     private final int SIZE = 8;
     private Spot[][] boxes;
-    private Game game;
     private int xCord;
     private int yCord;
     private int newXCord;
@@ -36,29 +30,28 @@ class Board {
     public Board() {
         this.boxes = new Spot[SIZE][SIZE];
     }
-    public void startboard() {
+    public void startBoard() {
         for (int i = 0; i < boxes.length; i++) {
             for (int j = 0; j < boxes.length; j++) {
                 boxes[i][j] = new Spot(i, j, null);
             }
         }
-
         for (int i = 0; i < boxes.length; i += 2) {
-            boxes[i][1] = new Spot(0, 1, new Checker(true));
-            boxes[i][5] = new Spot(0, 1, new Checker(false));
-            boxes[i][7] = new Spot(0, 1, new Checker(false));
+            boxes[i][1] = new Spot(0, 1, new Pawn(true));
+            boxes[i][5] = new Spot(0, 1, new Pawn(false));
+            boxes[i][7] = new Spot(0, 1, new Pawn(false));
         }
         for (int i = 1; i < boxes.length; i += 2) {
-            boxes[i][0] = new Spot(0, 1, new Checker(true));
-            boxes[i][2] = new Spot(0, 1, new Checker(true));
-            boxes[i][6] = new Spot(0, 1, new Checker(false));
+            boxes[i][0] = new Spot(0, 1, new Pawn(true));
+            boxes[i][2] = new Spot(0, 1, new Pawn(true));
+            boxes[i][6] = new Spot(0, 1, new Pawn(false));
         }
         draw(boxes);
     }
     public void setCurrentX(int xCord) {
         this.xCord = xCord;
     }
-    public int getxCord() {
+    public int getXCord() {
         return xCord;
     }
     public void setCurrentY(int yCord) {
@@ -88,8 +81,8 @@ class Board {
 
         for (int i = 0; i < boxes.length; i++) {
             System.out.print(i + " |");
-            for (int j = 0; j < boxes.length; j++) {
-                System.out.print(boxes[j][i] + " ");
+            for (Spot[] box : boxes) {
+                System.out.print(box[i] + " ");
             }
             System.out.print("|");
             System.out.println();
@@ -99,22 +92,34 @@ class Board {
         System.out.println(" ");
     }
 }
-class Game{
-    private Player[] players;
+abstract class Piece {
+    private boolean player1;
+    public Piece(boolean player1) {
+        this.player1 = player1;
+    }
+    public boolean isPlayer1() {
+        return player1;
+    }
+}
+
+class Pawn extends Piece {
+    public Pawn(boolean player1) {
+        super(player1);
+    }
+}
+
+public class Checker {
     private Board board;
     private Spot[][] boxes;
     private Piece pieceToMove;
     private boolean isPlayer1Turn = true;
     private boolean isGameActive = true;
-
-    public Game(Player p1, Player p2, Board board){
-        this.players = new Player[]{p1, p2};
+    public Checker(Board board) {
         this.board = board;
         this.boxes = board.getBoxes();
     }
-
-    public void initialize(){
-        board.startboard();
+    public void initialize() {
+        board.startBoard();
     }
     public void inputHandler() {
         Scanner scanner = new Scanner(System.in);
@@ -134,7 +139,6 @@ class Game{
             if (oldX > 7 || oldX < -1 && oldY > 7 || oldY < -1 && newX > 7 || newX < -1 && newY > 7 || newY < -1) {
                 System.out.println("\nThis was an invalid move, try again! \n");
                 board.draw(boxes);
-
             } else {
                 board.setCurrentX(oldX);
                 board.setCurrentY(oldY);
@@ -144,22 +148,22 @@ class Game{
             }
         }
     }
-        public int getInput(String message, Scanner scanner){
-            System.out.print(message);
-            int temp = scanner.nextInt();
-            if (temp == -1) {
-                endGame();
-            }
-            return temp;
+    public int getInput(String message, Scanner scanner) {
+        System.out.print(message);
+        int temp = scanner.nextInt();
+        if (temp == -1) {
+            endGame();
         }
-    public boolean isGameActive(){
+        return temp;
+    }
+    public boolean isGameActive() {
         return isGameActive;
     }
-    public void endGame(){
+    public void endGame() {
         System.exit(0);
     }
     public boolean validMove(int currentX, int currentY, int newX, int newY, Piece pieceToMove) {
-        if (pieceToMove.isPlayer1() == isPlayer1Turn && boxes[newX][newY].getPiece() == null){
+        if (pieceToMove.isPlayer1() == isPlayer1Turn && boxes[newX][newY].getPiece() == null) {
             int xDiff = Math.abs(currentX - newX);
             int yDiff = currentY - newY;
             if (xDiff == 1) {
@@ -170,13 +174,13 @@ class Game{
         }
         return false;
     }
-    public void move(){
-        if(board.getxCord() >= 7 || board.getxCord() <= 0 && board.getYCord() >= 7 || board.getYCord() <= 0) {
+    public void move() {
+        if (board.getXCord() >= 7 || board.getXCord() <= 0 && board.getYCord() >= 7 || board.getYCord() <= 0) {
             System.out.println("This is a invalid move, try again");
         }
-        pieceToMove = boxes[board.getxCord()][board.getYCord()].getPiece();
-        if (validMove(board.getxCord(), board.getYCord(), board.getNewXCord(), board.getNewYCord(), pieceToMove)) {
-            boxes[board.getxCord()][board.getYCord()] = new Spot(board.getxCord(), board.getYCord(), null);
+        pieceToMove = boxes[board.getXCord()][board.getYCord()].getPiece();
+        if (validMove(board.getXCord(), board.getYCord(), board.getNewXCord(), board.getNewYCord(), pieceToMove)) {
+            boxes[board.getXCord()][board.getYCord()] = new Spot(board.getXCord(), board.getYCord(), null);
             boxes[board.getNewXCord()][board.getNewYCord()] = new Spot(board.getNewXCord(), board.getNewYCord(), pieceToMove);
             board.draw(boxes);
             System.out.println("Piece moved! \n");
@@ -186,40 +190,17 @@ class Game{
             board.draw(boxes);
         }
     }
-    public void toggleTurn(){
+    public void toggleTurn() {
         isPlayer1Turn = !isPlayer1Turn;
     }
-}
-class Player{
-    boolean one;
-    public Player(boolean one){
-        this.one = one;
-    }
-
-}
-abstract class Piece{
-    private boolean player1;
-    public Piece(boolean player1) {
-        this.player1 = player1;
-    }
-    public boolean isPlayer1() {
-        return player1;
-    }
-}
-public class Checker extends Piece{
-    public Checker(boolean player1){
-        super(player1);
-    }
     public static void main(String[] args) {
-        Player p1 = new Player(true);
-        Player p2 = new Player(false);
         Board board = new Board();
-        Game game = new Game(p1, p2, board);
-        game.initialize();
-        while(game.isGameActive()) {
-            game.inputHandler();
-            game.move();
-            }
+        Checker checker = new Checker(board);
+        checker.initialize();
+        while (checker.isGameActive()) {
+            checker.inputHandler();
+            checker.move();
+        }
         System.out.println("Game over!");
     }
 }
